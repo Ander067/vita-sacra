@@ -1,0 +1,36 @@
+# Entornos virtuales de Python
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+
+# Variables de entorno y credenciales
+**/.env
+**/.env.*
+!**/.env.example
+
+# Python
+**/.pytest_cache/
+
+# Node.js
+**/node_modules/
+**/dist/
+**/coverage/
+
+# Flutter y Dart
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+
+# Editores
+.vscode/
+.idea/
+
+# Sistema operativo
+desktop.ini
+.DS_Store
+Thumbs.db
+
+# Archivos temporales
+*.log
