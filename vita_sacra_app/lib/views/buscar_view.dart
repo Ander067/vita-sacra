@@ -330,15 +330,15 @@ class _BuscarViewState extends State<BuscarView> {
         },
 
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
 
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Icono representativo del articulo.
               Container(
-                width: 65,
-                height: 65,
+                width: 55,
+                height: 55,
                 decoration: BoxDecoration(
                   color: colores.primaryContainer,
                   borderRadius: BorderRadius.circular(10),
@@ -477,37 +477,46 @@ class _BuscarViewState extends State<BuscarView> {
   }) {
     final ColorScheme colores = Theme.of(context).colorScheme;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+    return LayoutBuilder(
+      builder: (context, restricciones) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: restricciones.maxHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icono, size: 45, color: colores.primary),
 
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icono, size: 55, color: colores.primary),
+                    const SizedBox(height: 12),
 
-            const SizedBox(height: 14),
+                    Text(
+                      titulo,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: colores.onSurface,
+                      ),
+                    ),
 
-            Text(
-              titulo,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colores.onSurface,
+                    const SizedBox(height: 8),
+
+                    Text(
+                      descripcion,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: colores.onSurfaceVariant),
+                    ),
+                  ],
+                ),
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            Text(
-              descripcion,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colores.onSurfaceVariant),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

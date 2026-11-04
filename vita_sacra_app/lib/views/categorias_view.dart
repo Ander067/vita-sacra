@@ -202,18 +202,19 @@ class _CategoriasViewState extends State<CategoriasView> {
           _abrirCategoria(categoria);
         },
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Icono representativo de la categoria.
               Icon(
                 Icons.medical_information_outlined,
-                size: 38,
+                size: 32,
                 color: colores.onPrimaryContainer,
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Nombre de la categoria.
               Text(
@@ -222,7 +223,7 @@ class _CategoriasViewState extends State<CategoriasView> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: colores.onPrimaryContainer,
                 ),
@@ -230,25 +231,26 @@ class _CategoriasViewState extends State<CategoriasView> {
 
               // Descripcion cuando este disponible.
               if (descripcion.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
 
                 Text(
                   descripcion,
                   textAlign: TextAlign.center,
-                  maxLines: 3,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: colores.onPrimaryContainer,
                   ),
                 ),
               ],
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // Indicador de exploracion.
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Explorar',
