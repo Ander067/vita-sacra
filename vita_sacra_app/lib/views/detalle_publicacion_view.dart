@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
+import '../widgets/compartir_publicacion_button.dart';
 import 'anatomia_3d_view.dart';
 import 'comentarios_view.dart';
 
@@ -933,8 +934,16 @@ class _DetallePublicacionViewState extends State<DetallePublicacionView> {
         title: const Text('Detalle de publicacion'),
         centerTitle: true,
         actions: [
+          if (_publicacion != null)
+            CompartirPublicacionButton(
+              titulo: _obtenerTexto(
+                'titulo',
+                alternativo: 'Publicación Vita Sacra',
+              ),
+              descripcion: _obtenerTexto('descripcion'),
+            ),
           IconButton(
-            tooltip: 'Actualizar publicacion',
+            tooltip: 'Actualizar publicación',
             onPressed: _cargando ? null : _cargarPublicacion,
             icon: const Icon(Icons.refresh),
           ),

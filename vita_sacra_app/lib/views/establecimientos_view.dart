@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../services/api_service.dart';
+import '../widgets/abrir_mapa_button.dart';
 
 // Pantalla para consultar establecimientos de salud.
 class EstablecimientosView extends StatefulWidget {
@@ -498,6 +499,16 @@ class _EstablecimientosViewState extends State<EstablecimientosView> {
                     titulo: 'Coordenadas',
                     contenido: '$latitud, $longitud',
                   ),
+                const SizedBox(height: 8),
+
+                AbrirMapaButton(
+                  nombre: nombre,
+                  direccion: direccion,
+                  latitud: latitud,
+                  longitud: longitud,
+                ),
+
+                const SizedBox(height: 10),
 
                 // Copiar la direccion registrada.
                 if (direccion.isNotEmpty)

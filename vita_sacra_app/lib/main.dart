@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/app_theme.dart';
 import 'views/splash_view.dart';
 
+const String _claveTemaPreferido = 'vita_sacra_theme_mode';
+
 // Punto de entrada de la aplicacion.
-void main() {
-  // Inicializar los componentes de Flutter.
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Ejecutar la aplicacion.
-  runApp(const VitaSacraApp());
+  final SharedPreferences preferencias = await SharedPreferences.getInstance();
+
+  runApp(VitaSacraApp(preferencias: preferencias));
 }
 
 // Widget principal de Vita Sacra.
 class VitaSacraApp extends StatefulWidget {
-  const VitaSacraApp({super.key});
+  const VitaSacraApp({super.key, this.preferencias});
+
+  final SharedPreferences? preferencias;
 
   // Obtener el estado principal de la aplicacion.
   static VitaSacraAppState? of(BuildContext context) {
@@ -27,16 +32,53 @@ class VitaSacraApp extends StatefulWidget {
 
 // Estado principal de la aplicacion.
 class VitaSacraAppState extends State<VitaSacraApp> {
-  // Preferencia global de apariencia.
-  ThemeMode _temaActual = ThemeMode.system;
+  late ThemeMode _temaActual;
 
   // Consultar el tema seleccionado.
   ThemeMode get temaActual => _temaActual;
 
-  // Cambiar el tema de toda la aplicacion.
-  void cambiarTema(ThemeMode tema) {
-    // Evitar actualizaciones innecesarias.
+  @override
+  void initState() {
+    super.initState();
+    _temaActual = _leerTemaGuardado();
+  }
+
+  ThemeMode _leerTemaGuardado() {
+    final String? temaGuardado = widget.preferencias?.getString(
+      _claveTemaPreferido,
+    );
+
+    switch (temaGuardado) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  // Cambiar y guardar el tema de toda la aplicacion.
+  Future<void> cambiarTema(ThemeMode tema) async {
     if (_temaActual == tema) {
+      return;
+    }
+
+    final SharedPreferences? preferencias = widget.preferencias;
+
+    if (preferencias != null) {
+      final bool guardado = await preferencias.setString(
+        _claveTemaPreferido,
+        tema.name,
+      );
+
+      if (!guardado) {
+        throw StateError('No fue posible guardar la preferencia del tema.');
+      }
+    }
+
+    if (!mounted) {
       return;
     }
 
@@ -48,22 +90,11 @@ class VitaSacraAppState extends State<VitaSacraApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Nombre de la aplicacion.
       title: 'Vita Sacra',
-
-      // Ocultar la etiqueta de depuracion.
       debugShowCheckedModeBanner: false,
-
-      // Aplicar el tema claro de la aplicacion.
       theme: AppTheme.temaClaro,
-
-      // Aplicar el tema oscuro de la aplicacion.
       darkTheme: AppTheme.temaOscuro,
-
-      // Utilizar la preferencia global seleccionada.
       themeMode: _temaActual,
-
-      // Pantalla inicial de la aplicacion.
       home: const SplashView(),
     );
   }

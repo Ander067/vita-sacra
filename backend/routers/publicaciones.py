@@ -481,7 +481,13 @@ def consultar_publicacion(
                 select
                     b.*,
                     c.nombre as categoria,
-                    u.nom_usr as autor
+                    u.nom_usr as autor,
+                    (
+                        select max(r.fecha)
+                        from revisiones_blog r
+                        where r.version_id = b.id_version
+                        and r.decision = 'aprobada'
+                    ) as fecha_revision
                 from blog_publico b
                 inner join categorias c
                     on b.categoria_id = c.id_categoria
@@ -505,6 +511,7 @@ def consultar_publicacion(
             status_code=500,
             detail="Error al consultar la publicacion"
         ) from error
+
 
 
 # Registrar una publicacion y su primera version.

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
@@ -16,34 +19,53 @@ class _SplashViewState extends State<SplashView> {
   // Servicio encargado de comprobar la sesion.
   final AuthService _authService = AuthService();
 
+  // Controla el retraso inicial antes de verificar la sesion.
+  Timer? _timerSesion;
+
   // Evitar ejecutar la navegacion mas de una vez.
   bool _navegacionRealizada = false;
+
+  // Pool de frases de bienvenida.
+  final List<String> _frasesInicio = [
+    'El conocimiento es el primer paso hacia el bienestar.',
+    'Cuidar la salud tambien comienza con aprender.',
+    'Conocimiento medico al alcance de todos.',
+    'La informacion confiable puede marcar la diferencia.',
+    'Un espacio para compartir, aprender y cuidar.',
+    'La salud se fortalece con conocimiento.',
+    'Bienvenido a una comunidad dedicada al bienestar.',
+    'Cada descubrimiento comienza con una pregunta.',
+    'Compartiendo conocimiento para una vida mejor.',
+    'La prevencion tambien nace del conocimiento.',
+  ];
+
+  // Seleccionar una frase aleatoria.
+  late final String _fraseInicio =
+      _frasesInicio[Random().nextInt(_frasesInicio.length)];
 
   @override
   void initState() {
     super.initState();
 
     // Verificar la sesion al iniciar la aplicacion.
-    _verificarSesion();
+    _timerSesion = Timer(const Duration(seconds: 4), _verificarSesion);
   }
 
   // Comprobar si el usuario tiene una sesion valida.
   Future<void> _verificarSesion() async {
+    // Evitar continuar si la pantalla ya fue cerrada.
+    if (!mounted || _navegacionRealizada) {
+      return;
+    }
+
     bool sesionActiva = false;
 
     try {
-      // Mostrar brevemente la pantalla de bienvenida.
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Evitar continuar si la pantalla fue cerrada.
-      if (!mounted) {
-        return;
-      }
-
       // Consultar la validez de la sesion con FastAPI.
       sesionActiva = await _authService.sesionValida();
     } catch (error) {
       // Continuar sin sesion cuando ocurra un error.
+      debugPrint('Error al verificar la sesion: $error');
       sesionActiva = false;
     }
 
@@ -72,6 +94,9 @@ class _SplashViewState extends State<SplashView> {
 
   @override
   void dispose() {
+    // Cancelar la espera inicial si la vista se destruye antes de tiempo.
+    _timerSesion?.cancel();
+
     // Liberar los recursos del servicio HTTP.
     _authService.cerrarServicio();
 
@@ -94,31 +119,12 @@ class _SplashViewState extends State<SplashView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icono principal de la aplicacion.
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: colores.primaryContainer,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Icon(
-                    Icons.monitor_heart_outlined,
-                    size: 70,
-                    color: colores.onPrimaryContainer,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                // Nombre de la aplicacion.
-                Text(
-                  'Vita Sacra',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: colores.primary,
-                  ),
+                // Logotipo principal de Vita Sacra.
+                Image.asset(
+                  'assets/images/vita_sacra_logo.png',
+                  width: 340,
+                  height: 190,
+                  fit: BoxFit.contain,
                 ),
 
                 const SizedBox(height: 8),
@@ -133,28 +139,41 @@ class _SplashViewState extends State<SplashView> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-                // Mensaje de bienvenida.
-                Text(
-                  'Conocimiento medico al alcance de todos',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: colores.onSurfaceVariant,
+                // Frase aleatoria de bienvenida.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 600),
+                  child: Text(
+                    _fraseInicio,
+                    key: ValueKey(_fraseInicio),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                      color: colores.onSurfaceVariant,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 60),
 
                 // Indicador de carga.
-                CircularProgressIndicator(color: colores.primary),
+                SizedBox(
+                  width: 30,
+                  height: 30,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: colores.primary,
+                  ),
+                ),
 
                 const SizedBox(height: 20),
 
                 // Mensaje durante la inicializacion.
                 Text(
-                  'Iniciando aplicacion...',
+                  'Preparando Vita Sacra...',
                   style: TextStyle(
                     fontSize: 14,
                     color: colores.onSurfaceVariant,

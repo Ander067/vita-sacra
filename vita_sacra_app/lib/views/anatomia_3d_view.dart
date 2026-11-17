@@ -3,31 +3,39 @@ import 'package:flutter/services.dart';
 
 import '../services/api_service.dart';
 import '../widgets/visor_modelo_3d.dart';
+import 'detalle_publicacion_view.dart';
 
-// Modelo de datos para un recurso anatomico publico y aprobado.
 class ModeloAnatomico {
   final int idRecurso;
+  final int idBlog;
   final String titulo;
   final String url;
+  final String tituloPublicacion;
+  final String categoria;
   final String? mime;
   final String? licencia;
   final String? procedencia;
 
   const ModeloAnatomico({
     required this.idRecurso,
+    required this.idBlog,
     required this.titulo,
     required this.url,
+    required this.tituloPublicacion,
+    required this.categoria,
     this.mime,
     this.licencia,
     this.procedencia,
   });
 
-  // Construir el modelo con la respuesta publica de FastAPI.
   factory ModeloAnatomico.fromJson(Map<String, dynamic> json) {
     return ModeloAnatomico(
       idRecurso: int.tryParse('${json['id_recurso']}') ?? 0,
+      idBlog: int.tryParse('${json['id_blog']}') ?? 0,
       titulo: (json['titulo'] ?? '').toString().trim(),
       url: (json['url'] ?? '').toString().trim(),
+      tituloPublicacion: (json['titulo_publicacion'] ?? '').toString().trim(),
+      categoria: (json['categoria'] ?? '').toString().trim(),
       mime: json['mime']?.toString(),
       licencia: json['licencia']?.toString(),
       procedencia: json['procedencia']?.toString(),
@@ -35,9 +43,7 @@ class ModeloAnatomico {
   }
 }
 
-// Pantalla para consultar modelos anatomicos asociados a publicaciones.
 class Anatomia3DView extends StatefulWidget {
-  // Identificador opcional de la publicacion.
   final int? idBlog;
 
   const Anatomia3DView({super.key, this.idBlog});
@@ -47,19 +53,19 @@ class Anatomia3DView extends StatefulWidget {
 }
 
 class _Anatomia3DViewState extends State<Anatomia3DView> {
-  // Servicio para consumir las APIs de Vita Sacra.
   final ApiService _apiService = ApiService();
+  final TextEditingController _buscarController = TextEditingController();
 
-  // Recursos tridimensionales de la publicacion.
   List<ModeloAnatomico> _modelos = [];
+  List<String> _categorias = [];
   ModeloAnatomico? _modeloSeleccionado;
 
-  // Estado de consulta.
-  bool _cargando = false;
+  String _categoriaSeleccionada = '';
+  bool _cargando = true;
   String? _error;
-
-  // Identificador para descartar respuestas anteriores.
   int _numeroSolicitud = 0;
+
+  bool get _esBiblioteca => widget.idBlog == null;
 
   @override
   void initState() {
@@ -71,67 +77,45 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
   void didUpdateWidget(covariant Anatomia3DView oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Consultar nuevamente cuando cambie la publicacion.
     if (oldWidget.idBlog != widget.idBlog) {
-      // Descartar los modelos de la publicacion anterior.
       _numeroSolicitud++;
       _modelos = [];
+      _categorias = [];
       _modeloSeleccionado = null;
+      _categoriaSeleccionada = '';
+      _buscarController.clear();
       _cargarModelos();
     }
   }
 
-  // Convertir los identificadores recibidos desde FastAPI.
-  int? _convertirEntero(dynamic valor) {
-    if (valor is int) {
-      return valor;
-    }
-    return int.tryParse(valor?.toString() ?? '');
+  String _claveModelo(ModeloAnatomico modelo) {
+    return '${modelo.idBlog}:${modelo.idRecurso}';
   }
 
-  // Verificar que la direccion no contenga credenciales y utilice HTTPS.
-  bool _esUrlSegura(String url) {
-    final Uri? uri = Uri.tryParse(url);
-    return uri != null &&
-        uri.scheme == 'https' &&
-        uri.host.isNotEmpty &&
-        uri.userInfo.isEmpty;
-  }
-
-  // Comprobar que el recurso corresponda a un archivo GLB.
-  // El tipo MIME puede variar entre proveedores de archivos 3D.
-  bool _esArchivoGlb(ModeloAnatomico modelo) {
-    final Uri? uri = Uri.tryParse(modelo.url);
-    if (uri == null) {
-      return false;
-    }
-
-    final String ruta = uri.path.toLowerCase();
-    final String mime = (modelo.mime ?? '').trim().toLowerCase();
-    // La extension .glb identifica el formato requerido.
-    // Si la URL es opaca, se admite el MIME especifico de GLB.
-    return ruta.endsWith('.glb') || mime == 'model/gltf-binary';
-  }
-
-  // Consultar los modelos tridimensionales de una publicacion.
   Future<void> _cargarModelos() async {
     if (!mounted) {
       return;
     }
 
-    final int solicitud = ++_numeroSolicitud;
-    final int? idBlog = widget.idBlog;
-    final int? seleccionAnterior = _modeloSeleccionado?.idRecurso;
-
-    if (idBlog == null || idBlog <= 0) {
+    if (widget.idBlog != null && widget.idBlog! <= 0) {
       setState(() {
         _modelos = [];
+        _categorias = [];
         _modeloSeleccionado = null;
+        _error = 'El identificador de la publicacion no es valido.';
         _cargando = false;
-        _error = null;
       });
       return;
     }
+
+    final int solicitud = ++_numeroSolicitud;
+    final String? seleccionAnterior = _modeloSeleccionado == null
+        ? null
+        : _claveModelo(_modeloSeleccionado!);
+
+    final String endpoint = widget.idBlog == null
+        ? '/recursos/modelos-3d/publicos'
+        : '/recursos/modelos-3d/publicos?blog_id=${widget.idBlog}';
 
     setState(() {
       _cargando = true;
@@ -139,106 +123,92 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
     });
 
     try {
-      // Recuperar los bloques de la version publicada.
-      final dynamic respuesta = await _apiService.get(
-        '/recursos/publicaciones/$idBlog/bloques',
-      );
+      final dynamic respuesta = await _apiService.get(endpoint);
 
-      if (respuesta is! List) {
-        throw const ApiException('La respuesta de los bloques no es valida.');
+      dynamic registros = respuesta;
+
+      if (respuesta is Map) {
+        registros =
+            respuesta['items'] ?? respuesta['modelos'] ?? respuesta['results'];
       }
 
-      // Evitar consultar dos veces un mismo recurso.
-      final Set<int> identificadores = {};
-
-      for (final dynamic elemento in respuesta) {
-        if (elemento is! Map) {
-          continue;
-        }
-
-        final Map<String, dynamic> bloque = Map<String, dynamic>.from(elemento);
-
-        if (bloque['tipo'] != 'modelo_3d') {
-          continue;
-        }
-
-        final int? idRecurso = _convertirEntero(bloque['recurso_id']);
-        if (idRecurso != null && idRecurso > 0) {
-          identificadores.add(idRecurso);
-        }
+      if (registros is! List) {
+        throw const ApiException(
+          'El formato de la biblioteca de modelos no es valido.',
+        );
       }
 
-      final List<ModeloAnatomico> modelos = [];
+      final Map<String, ModeloAnatomico> modelosUnicos = {};
 
-      // Verificar cada recurso en el endpoint publico de FastAPI.
-      for (final int idRecurso in identificadores) {
-        if (!mounted || solicitud != _numeroSolicitud) {
-          return;
-        }
-
-        try {
-          final dynamic datos = await _apiService.get(
-            '/recursos/publicos/$idRecurso',
+      for (final dynamic registro in registros) {
+        if (registro is! Map) {
+          throw const ApiException(
+            'Se recibio un modelo con formato no valido.',
           );
-
-          if (datos is! Map) {
-            continue;
-          }
-
-          final Map<String, dynamic> recurso = Map<String, dynamic>.from(datos);
-
-          // El endpoint publico solamente debe entregar aprobados.
-          if (recurso['tipo'] != 'modelo_3d') {
-            continue;
-          }
-
-          final ModeloAnatomico modelo = ModeloAnatomico.fromJson(recurso);
-
-          // Comprobar identidad, URL y formato del archivo.
-          if (modelo.idRecurso != idRecurso ||
-              !_esUrlSegura(modelo.url) ||
-              !_esArchivoGlb(modelo)) {
-            continue;
-          }
-
-          modelos.add(modelo);
-        } on ApiException catch (error) {
-          // Un recurso no disponible no impide consultar los demas.
-          if (error.codigoEstado != 403 && error.codigoEstado != 404) {
-            rethrow;
-          }
         }
+
+        final ModeloAnatomico modelo = ModeloAnatomico.fromJson(
+          Map<String, dynamic>.from(registro),
+        );
+
+        if (modelo.idRecurso <= 0 || modelo.idBlog <= 0) {
+          throw const ApiException(
+            'Un modelo no contiene identificadores validos.',
+          );
+        }
+
+        modelosUnicos.putIfAbsent(_claveModelo(modelo), () => modelo);
       }
 
-      if (!mounted ||
-          solicitud != _numeroSolicitud ||
-          idBlog != widget.idBlog) {
+      final List<ModeloAnatomico> modelos = modelosUnicos.values.toList();
+
+      final List<String> categorias =
+          modelos
+              .map((modelo) => modelo.categoria)
+              .where((categoria) => categoria.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+      if (!mounted || solicitud != _numeroSolicitud) {
         return;
       }
 
       ModeloAnatomico? seleccionado;
-      for (final ModeloAnatomico modelo in modelos) {
-        if (modelo.idRecurso == seleccionAnterior) {
-          seleccionado = modelo;
-          break;
+
+      if (seleccionAnterior != null) {
+        for (final ModeloAnatomico modelo in modelos) {
+          if (_claveModelo(modelo) == seleccionAnterior) {
+            seleccionado = modelo;
+            break;
+          }
         }
       }
 
-      if (seleccionado == null && modelos.isNotEmpty) {
-        seleccionado = modelos.first;
-      }
+      seleccionado ??= modelos.isEmpty ? null : modelos.first;
 
       setState(() {
         _modelos = modelos;
+        _categorias = categorias;
         _modeloSeleccionado = seleccionado;
         _cargando = false;
         _error = null;
+
+        if (!_categorias.contains(_categoriaSeleccionada)) {
+          _categoriaSeleccionada = '';
+        }
       });
+
+      _ajustarSeleccionAFiltros();
     } on ApiException catch (error) {
       if (!mounted || solicitud != _numeroSolicitud) {
         return;
       }
+
       setState(() {
+        _modelos = [];
+        _categorias = [];
+        _modeloSeleccionado = null;
         _error = error.mensaje;
         _cargando = false;
       });
@@ -246,50 +216,125 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
       if (!mounted || solicitud != _numeroSolicitud) {
         return;
       }
+
       setState(() {
+        _modelos = [];
+        _categorias = [];
+        _modeloSeleccionado = null;
         _error = 'No fue posible consultar los modelos anatomicos.';
         _cargando = false;
       });
     }
   }
 
-  // Seleccionar un modelo de la publicacion.
+  List<ModeloAnatomico> get _modelosFiltrados {
+    final String busqueda = _buscarController.text.trim().toLowerCase();
+
+    return _modelos.where((modelo) {
+      final bool coincideBusqueda =
+          busqueda.isEmpty ||
+          modelo.titulo.toLowerCase().contains(busqueda) ||
+          modelo.tituloPublicacion.toLowerCase().contains(busqueda) ||
+          modelo.categoria.toLowerCase().contains(busqueda);
+
+      final bool coincideCategoria =
+          _categoriaSeleccionada.isEmpty ||
+          modelo.categoria == _categoriaSeleccionada;
+
+      return coincideBusqueda && coincideCategoria;
+    }).toList();
+  }
+
+  void _ajustarSeleccionAFiltros() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      final List<ModeloAnatomico> filtrados = _modelosFiltrados;
+      final ModeloAnatomico? actual = _modeloSeleccionado;
+
+      if (filtrados.isEmpty) {
+        _modeloSeleccionado = null;
+      } else if (actual == null ||
+          !filtrados.any(
+            (modelo) => _claveModelo(modelo) == _claveModelo(actual),
+          )) {
+        _modeloSeleccionado = filtrados.first;
+      }
+    });
+  }
+
+  void _actualizarBusqueda(String valor) {
+    _ajustarSeleccionAFiltros();
+  }
+
+  void _actualizarCategoria(String? categoria) {
+    _categoriaSeleccionada = categoria ?? '';
+    _ajustarSeleccionAFiltros();
+  }
+
   void _seleccionarModelo(ModeloAnatomico modelo) {
     setState(() {
       _modeloSeleccionado = modelo;
     });
   }
 
-  // Copiar la direccion del recurso autorizado.
   Future<void> _copiarEnlace() async {
     final ModeloAnatomico? modelo = _modeloSeleccionado;
+
     if (modelo == null) {
       return;
     }
 
     try {
       await Clipboard.setData(ClipboardData(text: modelo.url));
+
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enlace del recurso copiado correctamente.'),
-        ),
-      );
+
+      _mostrarMensaje('Enlace del modelo copiado.');
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No fue posible copiar el enlace.')),
-      );
+
+      _mostrarMensaje('No fue posible copiar el enlace.');
     }
   }
 
-  // Construir el encabezado principal.
-  Widget _construirEncabezado() {
-    final ColorScheme colores = Theme.of(context).colorScheme;
+  void _abrirPublicacion(int idBlog) {
+    if (idBlog <= 0) {
+      _mostrarMensaje('La publicacion asociada no es valida.');
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetallePublicacionView(idBlog: idBlog),
+      ),
+    );
+  }
+
+  void _mostrarMensaje(String mensaje) {
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(mensaje)));
+  }
+
+  Widget _construirEncabezado(ColorScheme colores) {
+    final String titulo = _esBiblioteca
+        ? 'Biblioteca de anatomia 3D'
+        : 'Modelos de la publicacion';
+
+    final String descripcion = _esBiblioteca
+        ? 'Explora modelos GLB aprobados asociados a publicaciones educativas.'
+        : 'Modelos GLB aprobados asociados a este contenido educativo.';
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,17 +357,16 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Anatomia tridimensional',
+                titulo,
                 style: TextStyle(
-                  fontSize: 23,
+                  fontSize: 21,
                   fontWeight: FontWeight.bold,
                   color: colores.primary,
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                'Consulta recursos anatomicos '
-                'asociados a publicaciones educativas.',
+                descripcion,
                 style: TextStyle(fontSize: 13, color: colores.onSurfaceVariant),
               ),
             ],
@@ -332,126 +376,83 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
     );
   }
 
-  // Construir el area de visualizacion interactiva del modelo GLB.
-  Widget _construirVisor() {
-    final ColorScheme colores = Theme.of(context).colorScheme;
-    final ModeloAnatomico? modelo = _modeloSeleccionado;
-
-    // Mantener un mensaje informativo mientras no exista un modelo seleccionado.
-    if (modelo == null) {
-      return Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 250),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colores.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colores.outlineVariant),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.view_in_ar_outlined, size: 70, color: colores.primary),
-            const SizedBox(height: 16),
-            Text(
-              'Visualizador anatomico 3D',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colores.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Selecciona un modelo anatomico disponible para visualizarlo.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: colores.onSurfaceVariant),
-            ),
-          ],
-        ),
-      );
+  Widget _construirFiltros(ColorScheme colores) {
+    if (!_esBiblioteca) {
+      return const SizedBox.shrink();
     }
 
-    // Mostrar el archivo autorizado con rotacion y zoom mediante el widget 3D.
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        VisorModelo3D(
-          key: ValueKey<int>(modelo.idRecurso),
-          urlModelo: modelo.url,
-          titulo: modelo.titulo,
-          mime: modelo.mime,
-          altura: 300,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          modelo.titulo.isNotEmpty
-              ? modelo.titulo
-              : 'Modelo ${modelo.idRecurso}',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: colores.onSurface,
+        TextField(
+          controller: _buscarController,
+          onChanged: _actualizarBusqueda,
+          decoration: InputDecoration(
+            hintText: 'Buscar modelo, publicacion o categoria...',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: _buscarController.text.isEmpty
+                ? null
+                : IconButton(
+                    tooltip: 'Limpiar busqueda',
+                    onPressed: () {
+                      _buscarController.clear();
+                      _actualizarBusqueda('');
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+            border: const OutlineInputBorder(),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Gira el modelo y utiliza los gestos de acercamiento para explorarlo.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: colores.onSurfaceVariant),
-        ),
-        const SizedBox(height: 10),
-        Center(
-          child: OutlinedButton.icon(
-            onPressed: _copiarEnlace,
-            icon: const Icon(Icons.link_outlined),
-            label: const Text('Copiar enlace del modelo'),
+        if (_categorias.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          DropdownButtonFormField<String>(
+            initialValue: _categoriaSeleccionada,
+            decoration: const InputDecoration(
+              labelText: 'Filtrar por categoria',
+              prefixIcon: Icon(Icons.category_outlined),
+              border: OutlineInputBorder(),
+            ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: '',
+                child: Text('Todas las categorias'),
+              ),
+              ..._categorias.map(
+                (categoria) => DropdownMenuItem<String>(
+                  value: categoria,
+                  child: Text(categoria, overflow: TextOverflow.ellipsis),
+                ),
+              ),
+            ],
+            onChanged: _actualizarCategoria,
           ),
-        ),
+        ],
+        const SizedBox(height: 14),
       ],
     );
   }
 
-  // Construir un mensaje cuando no se selecciono una publicacion.
-  Widget _construirSinPublicacion() {
-    return _construirMensaje(
-      Icons.article_outlined,
-      'Selecciona una publicacion',
-      'Los modelos anatomicos se consultan desde los articulos '
-          'educativos publicados. Abre una publicacion que contenga '
-          'recursos tridimensionales.',
-    );
-  }
-
-  // Construir un mensaje cuando no hay modelos disponibles.
-  Widget _construirSinModelos() {
-    return _construirMensaje(
-      Icons.inventory_2_outlined,
-      'No hay modelos disponibles',
-      'Esta publicacion no tiene archivos GLB publicos, '
-          'aprobados y disponibles.',
-    );
-  }
-
-  // Construir los mensajes de estado de la pantalla.
-  Widget _construirMensaje(IconData icono, String titulo, String descripcion) {
-    final ColorScheme colores = Theme.of(context).colorScheme;
-
+  Widget _construirMensaje({
+    required ColorScheme colores,
+    required IconData icono,
+    required String titulo,
+    required String descripcion,
+    bool reintentar = false,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colores.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colores.outlineVariant),
       ),
       child: Column(
         children: [
-          Icon(icono, size: 42, color: colores.primary),
+          Icon(icono, size: 46, color: colores.primary),
           const SizedBox(height: 12),
           Text(
             titulo,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
@@ -462,61 +463,119 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
           Text(
             descripcion,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: colores.onSurfaceVariant),
+            style: TextStyle(color: colores.onSurfaceVariant),
           ),
+          if (reintentar) ...[
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: _cargarModelos,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  // Construir la lista de modelos asociados al articulo.
-  Widget _construirModelos() {
-    final ColorScheme colores = Theme.of(context).colorScheme;
+  Widget _construirVisor(ColorScheme colores) {
+    final ModeloAnatomico? modelo = _modeloSeleccionado;
+
+    if (modelo == null) {
+      return _construirMensaje(
+        colores: colores,
+        icono: Icons.view_in_ar_outlined,
+        titulo: 'Selecciona un modelo',
+        descripcion: 'Elige un modelo de la lista para visualizarlo.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        VisorModelo3D(
+          key: ValueKey<String>(_claveModelo(modelo)),
+          urlModelo: modelo.url,
+          titulo: modelo.titulo,
+          mime: modelo.mime,
+          altura: 340,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Arrastra para girar y usa dos dedos para acercar o alejar. '
+          'Toca el icono AR del visor para abrir Scene Viewer.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: colores.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+
+  Widget _construirListaModelos(ColorScheme colores) {
+    final List<ModeloAnatomico> modelos = _modelosFiltrados;
+
+    if (modelos.isEmpty) {
+      return _construirMensaje(
+        colores: colores,
+        icono: Icons.search_off_outlined,
+        titulo: 'Sin resultados',
+        descripcion: 'No hay modelos que coincidan con los filtros.',
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Modelos disponibles',
+          'Modelos disponibles (${modelos.length})',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: colores.onSurface,
           ),
         ),
-        const SizedBox(height: 14),
-        ..._modelos.map((modelo) {
+        const SizedBox(height: 10),
+        ...modelos.map((modelo) {
           final bool seleccionado =
-              _modeloSeleccionado?.idRecurso == modelo.idRecurso;
+              _modeloSeleccionado != null &&
+              _claveModelo(_modeloSeleccionado!) == _claveModelo(modelo);
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Card(
-              color: seleccionado
-                  ? colores.primaryContainer
-                  : colores.surfaceContainerLow,
-              child: ListTile(
-                leading: Icon(
-                  Icons.view_in_ar_outlined,
-                  color: seleccionado
-                      ? colores.onPrimaryContainer
-                      : colores.primary,
-                ),
-                title: Text(
-                  modelo.titulo.isNotEmpty
-                      ? modelo.titulo
-                      : 'Modelo ${modelo.idRecurso}',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text('Recurso ${modelo.idRecurso}'),
-                trailing: Icon(
-                  seleccionado ? Icons.check_circle : Icons.chevron_right,
-                  color: seleccionado
-                      ? colores.primary
-                      : colores.onSurfaceVariant,
-                ),
-                onTap: () => _seleccionarModelo(modelo),
+          final String titulo = modelo.titulo.isEmpty
+              ? 'Modelo ${modelo.idRecurso}'
+              : modelo.titulo;
+
+          return Card(
+            color: seleccionado
+                ? colores.primaryContainer
+                : colores.surfaceContainerLow,
+            margin: const EdgeInsets.only(bottom: 9),
+            child: ListTile(
+              leading: Icon(
+                Icons.view_in_ar_outlined,
+                color: seleccionado
+                    ? colores.onPrimaryContainer
+                    : colores.primary,
               ),
+              title: Text(
+                titulo,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                [
+                  if (modelo.tituloPublicacion.isNotEmpty)
+                    modelo.tituloPublicacion,
+                  if (modelo.categoria.isNotEmpty) modelo.categoria,
+                ].join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Icon(
+                seleccionado ? Icons.check_circle : Icons.chevron_right,
+                color: seleccionado
+                    ? colores.primary
+                    : colores.onSurfaceVariant,
+              ),
+              onTap: () => _seleccionarModelo(modelo),
             ),
           );
         }),
@@ -524,14 +583,13 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
     );
   }
 
-  // Construir los datos del modelo seleccionado.
-  Widget _construirInformacion() {
+  Widget _construirInformacion(ColorScheme colores) {
     final ModeloAnatomico? modelo = _modeloSeleccionado;
+
     if (modelo == null) {
       return const SizedBox.shrink();
     }
 
-    final ColorScheme colores = Theme.of(context).colorScheme;
     final String licencia = modelo.licencia?.trim() ?? '';
     final String procedencia = modelo.procedencia?.trim() ?? '';
     final String mime = modelo.mime?.trim() ?? '';
@@ -547,59 +605,74 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Informacion del recurso',
+            'Informacion y atribucion',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.bold,
               color: colores.onSurface,
             ),
           ),
-          const SizedBox(height: 14),
-          const Text('Nombre:', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
+          const SizedBox(height: 12),
           Text(
-            modelo.titulo.isNotEmpty
-                ? modelo.titulo
-                : 'Modelo ${modelo.idRecurso}',
+            modelo.titulo.isEmpty
+                ? 'Modelo ${modelo.idRecurso}'
+                : modelo.titulo,
           ),
-          if (mime.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            const Text(
-              'Tipo de archivo:',
-              style: TextStyle(fontWeight: FontWeight.bold),
+          if (modelo.tituloPublicacion.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Publicacion: ${modelo.tituloPublicacion}',
+              style: TextStyle(color: colores.onSurfaceVariant),
             ),
-            const SizedBox(height: 5),
-            Text(mime),
           ],
-          const SizedBox(height: 14),
-          const Text(
-            'Licencia:',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 5),
+          if (modelo.categoria.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Categoria: ${modelo.categoria}',
+              style: TextStyle(color: colores.onSurfaceVariant),
+            ),
+          ],
+          if (mime.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              'Formato: $mime',
+              style: TextStyle(color: colores.onSurfaceVariant),
+            ),
+          ],
+          const SizedBox(height: 10),
           Text(
-            licencia.isNotEmpty ? licencia : 'No especificada en el recurso.',
+            'Licencia: ${licencia.isEmpty ? "No especificada" : licencia}',
+            style: TextStyle(color: colores.onSurfaceVariant),
           ),
-          const SizedBox(height: 14),
-          const Text(
-            'Procedencia:',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
-            procedencia.isNotEmpty
-                ? procedencia
-                : 'No especificada en el recurso.',
+            'Procedencia: '
+            '${procedencia.isEmpty ? "No especificada" : procedencia}',
+            style: TextStyle(color: colores.onSurfaceVariant),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _copiarEnlace,
+                icon: const Icon(Icons.link_outlined),
+                label: const Text('Copiar enlace'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _abrirPublicacion(modelo.idBlog),
+                icon: const Icon(Icons.article_outlined),
+                label: const Text('Ver publicacion'),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  // Construir la advertencia educativa.
-  Widget _construirAdvertencia() {
-    final ColorScheme colores = Theme.of(context).colorScheme;
-
+  Widget _construirAdvertencia(ColorScheme colores) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -607,28 +680,62 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
         color: colores.primaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: colores.onPrimaryContainer),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Este modulo tiene fines educativos. '
-              'Los modelos anatomicos no sustituyen '
-              'la valoracion de un profesional de la salud '
-              'ni los materiales clinicos especializados.',
-              style: TextStyle(fontSize: 12, color: colores.onPrimaryContainer),
-            ),
-          ),
-        ],
+      child: Text(
+        'Los modelos tienen fines educativos. No sustituyen la valoracion '
+        'de un profesional de la salud ni materiales clinicos especializados.',
+        style: TextStyle(fontSize: 12, color: colores.onPrimaryContainer),
       ),
+    );
+  }
+
+  Widget _construirContenido(ColorScheme colores) {
+    if (_cargando) {
+      return const Padding(
+        padding: EdgeInsets.all(32),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return _construirMensaje(
+        colores: colores,
+        icono: Icons.error_outline,
+        titulo: 'No se pudieron cargar los modelos',
+        descripcion: _error!,
+        reintentar: true,
+      );
+    }
+
+    if (_modelos.isEmpty) {
+      return _construirMensaje(
+        colores: colores,
+        icono: Icons.inventory_2_outlined,
+        titulo: 'No hay modelos disponibles',
+        descripcion: _esBiblioteca
+            ? 'Aun no hay modelos GLB aprobados asociados a publicaciones '
+                  'publicas. Cuando se agreguen desde la web, apareceran aqui.'
+            : 'Esta publicacion no tiene modelos GLB aprobados y disponibles.',
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _construirVisor(colores),
+        const SizedBox(height: 20),
+        _construirListaModelos(colores),
+        const SizedBox(height: 18),
+        _construirInformacion(colores),
+        const SizedBox(height: 18),
+        _construirAdvertencia(colores),
+      ],
     );
   }
 
   @override
   void dispose() {
     _numeroSolicitud++;
+    _buscarController.dispose();
     _apiService.cerrar();
     super.dispose();
   }
@@ -639,65 +746,30 @@ class _Anatomia3DViewState extends State<Anatomia3DView> {
 
     return Scaffold(
       backgroundColor: colores.surface,
-      appBar: AppBar(title: const Text('Anatomia humana'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(_esBiblioteca ? 'Biblioteca 3D' : 'Modelos anatomicos'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Actualizar modelos',
+            onPressed: _cargando ? null : _cargarModelos,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _cargarModelos,
-          child: SingleChildScrollView(
+          child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _construirEncabezado(),
-                const SizedBox(height: 22),
-                _construirVisor(),
-                const SizedBox(height: 26),
-                if (_cargando)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                if (_error != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: colores.errorContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _error!,
-                      style: TextStyle(color: colores.onErrorContainer),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: OutlinedButton.icon(
-                      onPressed: _cargarModelos,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Reintentar'),
-                    ),
-                  ),
-                ],
-                if (!_cargando && _error == null) ...[
-                  if (widget.idBlog == null || widget.idBlog! <= 0)
-                    _construirSinPublicacion()
-                  else if (_modelos.isEmpty)
-                    _construirSinModelos()
-                  else ...[
-                    _construirModelos(),
-                    const SizedBox(height: 22),
-                    _construirInformacion(),
-                  ],
-                ],
-                const SizedBox(height: 24),
-                _construirAdvertencia(),
-                const SizedBox(height: 24),
-              ],
-            ),
+            children: [
+              _construirEncabezado(colores),
+              const SizedBox(height: 18),
+              if (_esBiblioteca && _modelos.isNotEmpty)
+                _construirFiltros(colores),
+              _construirContenido(colores),
+            ],
           ),
         ),
       ),

@@ -272,6 +272,63 @@ def verificar_recurso_para_version(
 
     return recurso
 
+# Consulta los modelos GLB aprobados asociados a publicaciones publicas.
+@router.get("/modelos-3d/publicos")
+def consultar_modelos_3d_publicos(
+    blog_id: int | None = None,
+    db: Session = Depends(get_db)
+):
+    if blog_id is not None and blog_id <= 0:
+        raise HTTPException(
+            status_code=422,
+            detail="El identificador de la publicacion no es valido"
+        )
+
+    try:
+        resultado = db.execute(
+            text("""
+                select distinct
+                    r.id_recurso,
+                    r.tipo,
+                    r.url,
+                    r.mime,
+                    r.titulo,
+                    r.licencia,
+                    r.procedencia,
+                    bp.id_blog,
+                    bp.titulo as titulo_publicacion,
+                    c.nombre as categoria,
+                    bp.fecha_publicacion
+                from blog_publico bp
+                inner join bloques_version b
+                    on b.version_id = bp.id_version
+                inner join recursos r
+                    on r.id_recurso = b.recurso_id
+                inner join categorias c
+                    on c.id_categoria = bp.categoria_id
+                where b.tipo = 'modelo_3d'
+                and r.tipo = 'modelo_3d'
+                and r.estatus = 'aprobado'
+                and (
+                    :blog_id is null
+                    or bp.id_blog = :blog_id
+                )
+                order by
+                    fecha_publicacion desc,
+                    titulo_publicacion,
+                    titulo
+            """),
+            {"blog_id": blog_id}
+        ).mappings().all()
+
+        return [dict(fila) for fila in resultado]
+
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al consultar la biblioteca de modelos 3D"
+        ) from error
+
 
 # Consulta publica de recursos aprobados.
 

@@ -652,6 +652,53 @@ end$$
 
 delimiter ;
 
+MariaDB [vitasacra_blog_db]> CREATE TABLE intentos_login (
+    ->     id_intento INT AUTO_INCREMENT PRIMARY KEY,
+    ->     clave VARCHAR(64) NOT NULL UNIQUE,
+    ->     intentos INT NOT NULL DEFAULT 0,
+    ->     bloqueado_hasta DATETIME NULL,
+    ->     actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ->         ON UPDATE CURRENT_TIMESTAMP
+    -> ) ENGINE=InnoDB;
+ERROR 2006 (HY000): Server has gone away
+No connection. Trying to reconnect...
+Connection id:    4
+Current database: vitasacra_blog_db
+
+Query OK, 0 rows affected (0.156 sec)
+
+MariaDB [vitasacra_blog_db]> ALTER TABLE usuario
+    -> ADD COLUMN version_sesion INT NOT NULL DEFAULT 1;
+Query OK, 0 rows affected (0.041 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+MariaDB [vitasacra_blog_db]> CREATE TABLE recuperacion_password (
+    ->     id_recuperacion INT AUTO_INCREMENT PRIMARY KEY,
+    ->     usr_id INT NOT NULL,
+    ->     token_hash CHAR(64) NOT NULL UNIQUE,
+    ->     expira_en DATETIME NOT NULL,
+    ->     utilizado TINYINT(1) NOT NULL DEFAULT 0,
+    ->     creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ->
+    ->     FOREIGN KEY (usr_id)
+    ->         REFERENCES usuario(id_usr)
+    ->         ON DELETE CASCADE
+    -> ) ENGINE=InnoDB;
+Query OK, 0 rows affected (0.018 sec)
+
+MariaDB [vitasacra_blog_db]> CREATE TABLE IF NOT EXISTS intentos_login (
+    ->     id_intento INT AUTO_INCREMENT PRIMARY KEY,
+    ->     clave VARCHAR(64) NOT NULL UNIQUE,
+    ->     intentos INT NOT NULL DEFAULT 0,
+    ->     bloqueado_hasta DATETIME NULL,
+    ->     actualizado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ->         ON UPDATE CURRENT_TIMESTAMP
+    -> ) ENGINE=InnoDB;
+Query OK, 0 rows affected, 1 warning (0.002 sec)
+
+MariaDB [vitasacra_blog_db]>
+
+
 -- ============================================================
 -- 8. COMPROBACION DE LA BASE DE DATOS
 -- ============================================================
@@ -682,3 +729,181 @@ order by id_rol;
 select id_plantilla, nombre
 from plantillas
 order by id_plantilla;
+
+-- ============================================================
+-- CREDENCIALES PARA ACCESO BIOMETRICO
+-- ============================================================
+
+CREATE TABLE credenciales_biometricas (
+    id_credencial BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id_usr INT NOT NULL,
+    id_dispositivo VARCHAR(128) NOT NULL,
+    token_hash CHAR(64) NOT NULL,
+    activa TINYINT(1) NOT NULL DEFAULT 1,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_ultimo_uso TIMESTAMP NULL DEFAULT NULL,
+
+    UNIQUE KEY uq_usuario_dispositivo (
+        id_usr,
+        id_dispositivo
+    ),
+
+    INDEX idx_credencial_usuario (id_usr)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COLLATE=utf8mb4_unicode_ci;
+
+USE VitaSacra_blog_db;
+
+SHOW COLUMNS FROM usuario LIKE 'version_sesion';
+SHOW COLUMNS FROM usuario LIKE 'correo_verificado';
+
+SHOW TABLES LIKE 'sesiones_auth';
+SHOW TABLES LIKE 'verificaciones_email';
+SHOW TABLES LIKE 'recuperacion_cuenta';
+
+USE VitaSacra_blog_db;
+
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS version_sesion INT UNSIGNED NOT NULL DEFAULT 1;
+
+ALTER TABLE usuario
+    ADD COLUMN IF NOT EXISTS correo_verificado TINYINT(1) NOT NULL DEFAULT 1;
+
+CREATE TABLE IF NOT EXISTS sesiones_auth (
+    id_sesion CHAR(36) NOT NULL PRIMARY KEY,
+    usr_id INT NOT NULL,
+    refresh_token_hash CHAR(64) NOT NULL UNIQUE,
+    id_dispositivo VARCHAR(128) NULL,
+    creada_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expira_en DATETIME NOT NULL,
+    revocada_en DATETIME NULL,
+    ultimo_uso DATETIME NULL,
+    CONSTRAINT fk_sesiones_auth_usuario
+        FOREIGN KEY (usr_id) REFERENCES usuario(id_usr)
+        ON DELETE CASCADE,
+    INDEX idx_sesiones_auth_usuario (usr_id),
+    INDEX idx_sesiones_auth_expira (expira_en)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS verificaciones_email (
+    id_verificacion BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    usr_id INT NOT NULL,
+    token_hash CHAR(64) NOT NULL UNIQUE,
+    expira_en DATETIME NOT NULL,
+    usada_en DATETIME NULL,
+    creada_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_verificaciones_email_usuario
+        FOREIGN KEY (usr_id) REFERENCES usuario(id_usr)
+        ON DELETE CASCADE,
+    INDEX idx_verificaciones_email_usuario (usr_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+USE vitasacra_blog_db;
+
+ALTER TABLE versiones_blog
+    ADD COLUMN estatus ENUM(
+        'borrador',
+        'revision',
+        'correccion',
+        'rechazado',
+        'publicado'
+    ) NOT NULL DEFAULT 'borrador',
+    ADD COLUMN titulo_snapshot VARCHAR(200) NULL,
+    ADD COLUMN descripcion_snapshot VARCHAR(500) NULL,
+    ADD COLUMN categoria_id_snapshot INT NULL,
+    ADD COLUMN imagen_snapshot VARCHAR(255) NULL,
+    ADD COLUMN tipo_snapshot ENUM(
+        'articulo',
+        'ficha_medicamento',
+        'ficha_producto'
+    ) NULL;
+
+UPDATE versiones_blog v
+INNER JOIN blog b ON b.id_blog = v.blog_id
+SET
+    v.titulo_snapshot = b.titulo,
+    v.descripcion_snapshot = b.`desc`,
+    v.categoria_id_snapshot = b.categoria_id,
+    v.imagen_snapshot = b.img,
+    v.tipo_snapshot = b.tipo;
+
+UPDATE versiones_blog v
+INNER JOIN blog b ON b.id_blog = v.blog_id
+SET v.estatus = 'publicado'
+WHERE b.version_publica = v.numero;
+
+DROP TEMPORARY TABLE IF EXISTS tmp_vs_ultima_version;
+
+CREATE TEMPORARY TABLE tmp_vs_ultima_version AS
+SELECT blog_id, MAX(numero) AS numero
+FROM versiones_blog
+GROUP BY blog_id;
+
+UPDATE versiones_blog v
+INNER JOIN tmp_vs_ultima_version ultima
+    ON ultima.blog_id = v.blog_id
+   AND ultima.numero = v.numero
+INNER JOIN blog b ON b.id_blog = v.blog_id
+SET v.estatus = CASE b.estatus
+    WHEN 'borrador' THEN 'borrador'
+    WHEN 'revision' THEN 'revision'
+    WHEN 'correccion' THEN 'correccion'
+    WHEN 'rechazado' THEN 'rechazado'
+    ELSE v.estatus
+END
+WHERE b.version_publica IS NULL
+  AND b.estatus IN (
+      'borrador',
+      'revision',
+      'correccion',
+      'rechazado'
+  );
+
+DROP TEMPORARY TABLE tmp_vs_ultima_version;
+
+ALTER TABLE versiones_blog
+    MODIFY COLUMN titulo_snapshot VARCHAR(200) NOT NULL,
+    MODIFY COLUMN categoria_id_snapshot INT NOT NULL,
+    MODIFY COLUMN tipo_snapshot ENUM(
+        'articulo',
+        'ficha_medicamento',
+        'ficha_producto'
+    ) NOT NULL DEFAULT 'articulo',
+    ADD INDEX idx_versiones_blog_estado (blog_id, estatus, numero),
+    ADD CONSTRAINT fk_versiones_categoria_snapshot
+        FOREIGN KEY (categoria_id_snapshot)
+        REFERENCES categorias(id_categoria);
+
+CREATE OR REPLACE VIEW blog_publico AS
+SELECT
+    b.id_blog,
+    b.usr_id,
+    v.categoria_id_snapshot AS categoria_id,
+    v.titulo_snapshot AS titulo,
+    v.descripcion_snapshot AS `desc`,
+    v.imagen_snapshot AS img,
+    b.slug,
+    v.tipo_snapshot AS tipo,
+    b.fecha_publicacion,
+    v.advertencia,
+    v.id_version
+FROM blog b
+INNER JOIN versiones_blog v
+    ON v.blog_id = b.id_blog
+   AND v.numero = b.version_publica
+WHERE b.estatus = 'publicado';
+
+SELECT
+    id_version,
+    blog_id,
+    numero,
+    estatus,
+    titulo_snapshot,
+    tipo_snapshot
+FROM versiones_blog
+ORDER BY blog_id, numero;

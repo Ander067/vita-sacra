@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 
-// Widget reutilizable para visualizar modelos anatomicos en formato GLB.
 class VisorModelo3D extends StatelessWidget {
-  // Direccion publica del archivo tridimensional.
   final String urlModelo;
-
-  // Nombre accesible del modelo que se esta mostrando.
   final String titulo;
-
-  // MIME opcional para enlaces GLB que no terminan en .glb.
   final String? mime;
-
-  // Altura del area de visualizacion.
   final double altura;
 
   const VisorModelo3D({
@@ -23,17 +15,15 @@ class VisorModelo3D extends StatelessWidget {
     this.altura = 300,
   });
 
-  // Verificar que el enlace sea HTTPS y no incluya credenciales.
   bool _esUrlSegura(String url) {
     final Uri? uri = Uri.tryParse(url.trim());
 
     return uri != null &&
-        uri.scheme == 'https' &&
+        uri.scheme.toLowerCase() == 'https' &&
         uri.host.isNotEmpty &&
         uri.userInfo.isEmpty;
   }
 
-  // Comprobar la extension o el formato del recurso solicitado.
   bool _esArchivoGlb(String url) {
     final Uri? uri = Uri.tryParse(url.trim());
 
@@ -41,9 +31,47 @@ class VisorModelo3D extends StatelessWidget {
       return false;
     }
 
-    // Las URL firmadas pueden tener parametros despues de la extension.
     return uri.path.toLowerCase().endsWith('.glb') ||
         (mime ?? '').trim().toLowerCase() == 'model/gltf-binary';
+  }
+
+  Widget _construirMensaje(
+    BuildContext context, {
+    required IconData icono,
+    required String titulo,
+    required String descripcion,
+  }) {
+    final ColorScheme colores = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      constraints: BoxConstraints(minHeight: altura),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colores.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colores.outlineVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icono, size: 44, color: colores.error),
+          const SizedBox(height: 12),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            descripcion,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colores.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -54,39 +82,24 @@ class VisorModelo3D extends StatelessWidget {
         ? 'Modelo anatomico tridimensional'
         : titulo.trim();
 
-    // Evitar cargar enlaces vacios, inseguros o de formato no compatible.
-    if (!_esUrlSegura(url) || !_esArchivoGlb(url)) {
-      return Container(
-        width: double.infinity,
-        constraints: BoxConstraints(minHeight: altura),
-        alignment: Alignment.center,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: colores.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colores.outlineVariant),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.warning_amber_outlined, size: 42, color: colores.error),
-            const SizedBox(height: 12),
-            const Text(
-              'No se puede visualizar este modelo.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Se requiere un enlace HTTPS a un archivo GLB valido.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colores.onSurfaceVariant),
-            ),
-          ],
-        ),
+    if (!_esUrlSegura(url)) {
+      return _construirMensaje(
+        context,
+        icono: Icons.link_off,
+        titulo: 'No se puede abrir este modelo',
+        descripcion: 'El recurso debe tener una URL HTTPS valida.',
       );
     }
 
-    // El visor usa un WebView interno para representar el archivo GLB.
+    if (!_esArchivoGlb(url)) {
+      return _construirMensaje(
+        context,
+        icono: Icons.view_in_ar_outlined,
+        titulo: 'Formato no compatible',
+        descripcion: 'Se requiere un modelo GLB valido.',
+      );
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: SizedBox(
@@ -98,7 +111,13 @@ class VisorModelo3D extends StatelessWidget {
           alt: 'Modelo anatomico 3D: $nombre',
           cameraControls: true,
           autoRotate: false,
-          ar: false,
+          cameraTarget: 'auto auto auto',
+          cameraOrbit: 'auto 75deg 105%',
+          exposure: 1,
+          shadowIntensity: 0.8,
+          shadowSoftness: 0.8,
+          ar: true,
+          arModes: const ['scene-viewer'],
           backgroundColor: colores.surfaceContainerLow,
         ),
       ),

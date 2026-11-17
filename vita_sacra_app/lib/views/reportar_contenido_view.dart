@@ -425,7 +425,7 @@ class _ReportarContenidoViewState extends State<ReportarContenidoView> {
 
           // Seleccionar el motivo del reporte.
           DropdownButtonFormField<String>(
-            value: _motivoSeleccionado,
+            initialValue: _motivoSeleccionado,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Motivo del reporte',

@@ -1,0 +1,200 @@
+:root {
+    /* Paleta oficial Vita Sacra */
+    --principal: #8BB8E8;
+    --secundario: #B8D8F0;
+    --titulos: #2B5B84;
+    --fondo: #F0F6FC;
+    --tarjetas: #E4F0FA;
+    --contraste: #FFFFFF;
+
+    --texto: #2B5B84;
+    --campos: #FFFFFF;
+    --bordes: #B8D8F0;
+    --superficie: #FFFFFF;
+    --error: #B42318;
+
+    --radio: 14px;
+}
+
+/* Tema oscuro */
+body.tema-oscuro {
+    --fondo: #101B27;
+    --tarjetas: #1B2B3B;
+    --superficie: #24384B;
+    --texto: #EAF3FC;
+    --titulos: #8BB8E8;
+    --campos: #1B2B3B;
+    --bordes: #24384B;
+    --contraste: #1B2B3B;
+}
+
+/* Configuracion general */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: Arial, sans-serif;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Contenedor principal */
+.contenedor {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px;
+    background: var(--superficie);
+    border: 1px solid var(--bordes);
+    border-radius: 16px;
+}
+
+/* Titulos */
+h1 {
+    margin: 0;
+    color: var(--titulos);
+    font-size: 30px;
+    text-align: center;
+}
+
+h2 {
+    color: var(--titulos);
+    font-size: 25px;
+}
+
+.subtitulo {
+    margin: 10px 0 28px;
+    text-align: center;
+}
+
+/* Formularios */
+label {
+    display: block;
+    margin: 16px 0 7px;
+    font-weight: 600;
+}
+
+input {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--campos);
+    color: var(--texto);
+    font-size: 15px;
+}
+
+input:focus {
+    outline: none;
+    border: 2px solid var(--principal);
+}
+
+/* Botones principales */
+button {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 22px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--radio);
+    background: var(--titulos);
+    color: var(--contraste);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Botones secundarios */
+.boton-secundario {
+    border: 1.5px solid var(--bordes);
+    background: transparent;
+    color: var(--titulos);
+}
+
+/* Enlaces */
+a {
+    color: var(--titulos);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.enlaces {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.enlace {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Mensajes */
+.mensaje {
+    margin-top: 18px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--tarjetas);
+    color: var(--texto);
+    text-align: center;
+}
+
+.mensaje-error {
+    color: var(--error);
+}
+
+/* Tarjetas */
+.tarjeta {
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--tarjetas);
+}
+
+/* Contenedor de inicio */
+.contenedor-inicio {
+    width: 100%;
+    max-width: 650px;
+}
+
+/* Boton para cambiar el tema */
+.boton-tema {
+    border: 1px solid var(--bordes);
+    background: transparent;
+    color: var(--titulos);
+}
+
+/* Adaptacion a pantallas pequenas */
+@media (max-width: 480px) {
+    body {
+        padding: 16px;
+    }
+
+    .contenedor {
+        padding: 24px;
+    }
+
+    h1 {
+        font-size: 25px;
+    }
+
+    .enlaces {
+        flex-direction: column;
+        align-items: center;
+    }
+}

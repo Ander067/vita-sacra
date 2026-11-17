@@ -1,0 +1,275 @@
+/* Contenedor principal de gestion. */
+.gestion-publicaciones {
+    width: 100%;
+    padding: 30px;
+}
+
+/* Encabezado del listado. */
+.encabezado-gestion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.encabezado-gestion h2 {
+    margin: 0 0 8px;
+    color: var(--titulos);
+    font-size: 22px;
+}
+
+.encabezado-gestion p {
+    margin: 0;
+    color: var(--texto);
+    font-size: 14px;
+}
+
+.boton-nueva {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 42px;
+    padding: 10px 18px;
+    border-radius: var(--radio);
+    background: var(--titulos);
+    color: #FFFFFF;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Buscador de publicaciones. */
+.buscador-publicaciones {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.buscador-publicaciones input {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 14px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--campos);
+    color: var(--texto);
+    font-size: 14px;
+}
+
+.buscador-publicaciones input:focus {
+    outline: none;
+    border: 2px solid var(--principal);
+}
+
+.buscador-publicaciones button {
+    width: auto;
+    min-width: 100px;
+    margin: 0;
+}
+
+.buscador-publicaciones a {
+    color: var(--titulos);
+    font-size: 14px;
+    text-decoration: underline;
+}
+
+/* Tabla de publicaciones. */
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tabla-publicaciones {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.tabla-publicaciones th {
+    padding: 15px 12px;
+    background: var(--tarjetas);
+    color: var(--titulos);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tabla-publicaciones td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--bordes);
+    color: var(--texto);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.tabla-publicaciones tbody tr:hover {
+    background: var(--tarjetas);
+}
+
+/* Imagen de la tabla. */
+.imagen-tabla {
+    display: block;
+    width: 65px;
+    height: 55px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.sin-imagen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 65px;
+    height: 55px;
+    border-radius: 8px;
+    background: var(--tarjetas);
+    color: var(--texto);
+    font-size: 10px;
+    text-align: center;
+}
+
+/* Estados de las publicaciones. */
+.estado-publicacion {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.estado-publicado {
+    background: #D9F2E3;
+    color: #176B3A;
+}
+
+.estado-borrador {
+    background: #E8E8E8;
+    color: #555555;
+}
+
+.estado-revision {
+    background: #FFF0C2;
+    color: #805B00;
+}
+
+.estado-correccion {
+    background: #FFE1C2;
+    color: #914D00;
+}
+
+.estado-rechazado {
+    background: #FADDDD;
+    color: #A32323;
+}
+
+.estado-oculto {
+    background: #E4E0F2;
+    color: #57417D;
+}
+
+/* Boton para editar. */
+.boton-editar {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 75px;
+    padding: 8px 13px;
+    border-radius: 8px;
+    background: var(--principal);
+    color: #173B5A;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.boton-editar:hover,
+.boton-nueva:hover {
+    opacity: 0.85;
+}
+
+/* Mensajes del modulo. */
+.mensaje-gestion {
+    margin-bottom: 20px;
+    padding: 14px;
+    border: 1px solid var(--principal);
+    border-radius: 10px;
+    background: var(--tarjetas);
+    color: var(--texto);
+    font-size: 14px;
+}
+
+/* Listado vacio. */
+.sin-publicaciones {
+    padding: 45px 20px;
+    border: 1px dashed var(--bordes);
+    border-radius: var(--radio);
+    text-align: center;
+}
+
+.sin-publicaciones h3 {
+    margin: 0 0 10px;
+    color: var(--titulos);
+}
+
+.sin-publicaciones p {
+    margin: 0;
+    color: var(--texto);
+    font-size: 14px;
+}
+
+/* Adaptacion a pantallas pequenas. */
+@media (max-width: 650px) {
+
+    .gestion-publicaciones {
+        padding: 20px;
+    }
+
+    .encabezado-gestion {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .boton-nueva {
+        width: 100%;
+    }
+
+    .buscador-publicaciones {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .buscador-publicaciones input,
+    .buscador-publicaciones button {
+        width: 100%;
+    }
+
+}
+
+.acciones-publicacion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.acciones-publicacion form {
+    margin: 0;
+}
+
+.boton-eliminar {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #dc3545;
+    color: white;
+    cursor: pointer;
+}
+
+.boton-eliminar:hover {
+    background: #b02a37;
+}

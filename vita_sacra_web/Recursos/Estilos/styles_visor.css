@@ -1,0 +1,530 @@
+/* Paleta oficial Vita Sacra */
+:root {
+    --principal: #8BB8E8;
+    --secundario: #B8D8F0;
+    --titulos: #2B5B84;
+    --fondo: #F0F6FC;
+    --tarjetas: #E4F0FA;
+    --contraste: #FFFFFF;
+
+    --texto: #2B5B84;
+    --campos: #FFFFFF;
+    --bordes: #B8D8F0;
+    --superficie: #FFFFFF;
+    --error: #B42318;
+
+    --radio: 14px;
+}
+
+/* Tema oscuro */
+body.tema-oscuro {
+    --fondo: #101B27;
+    --tarjetas: #1B2B3B;
+    --superficie: #24384B;
+    --texto: #EAF3FC;
+    --titulos: #8BB8E8;
+    --campos: #1B2B3B;
+    --bordes: #24384B;
+    --contraste: #1B2B3B;
+}
+
+/* Configuracion general */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 0;
+    display: block;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: Arial, sans-serif;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Encabezado */
+.encabezado-visor {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 6%;
+    border-bottom: 1px solid var(--bordes);
+    background: var(--superficie);
+}
+
+.logo-visor h1 {
+    margin: 0;
+    color: var(--titulos);
+    font-size: 27px;
+    text-align: left;
+}
+
+.logo-visor p {
+    margin: 5px 0 0;
+    font-size: 13px;
+}
+
+/* Navegacion */
+.navegacion-visor {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.navegacion-visor a {
+    color: var(--texto);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.navegacion-visor a:hover {
+    color: var(--titulos);
+}
+
+/* Informacion del usuario */
+.usuario-visor {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.usuario-visor span {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Contenido principal */
+.contenido-visor {
+    width: 100%;
+    max-width: 1250px;
+    margin: auto;
+    padding: 35px 25px;
+}
+
+/* Bienvenida */
+.bienvenida-visor {
+    margin-bottom: 35px;
+    padding: 38px;
+    border-radius: 18px;
+    background: var(--tarjetas);
+}
+
+.bienvenida-visor h2 {
+    margin: 0;
+    color: var(--titulos);
+    font-size: 30px;
+}
+
+.bienvenida-visor p {
+    max-width: 650px;
+    margin: 12px 0 0;
+    line-height: 1.7;
+}
+
+/* Titulos de secciones */
+.seccion-visor {
+    margin-bottom: 38px;
+}
+
+.seccion-visor h2 {
+    margin-bottom: 20px;
+    color: var(--titulos);
+    font-size: 22px;
+}
+
+/* Categorias */
+.categorias {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.tarjeta-categoria {
+    padding: 20px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    text-align: center;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.tarjeta-categoria:hover {
+    transform: translateY(-3px);
+    background: var(--tarjetas);
+}
+
+.tarjeta-categoria h3 {
+    margin: 0;
+    color: var(--titulos);
+    font-size: 16px;
+}
+
+/* Publicaciones */
+.publicaciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.tarjeta-publicacion {
+    overflow: hidden;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--superficie);
+}
+
+.imagen-publicacion {
+    width: 100%;
+    height: 190px;
+    background: var(--tarjetas);
+    object-fit: cover;
+}
+
+.contenido-publicacion {
+    padding: 20px;
+}
+
+.contenido-publicacion h3 {
+    margin: 0 0 12px;
+    color: var(--titulos);
+    font-size: 18px;
+}
+
+.contenido-publicacion p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.informacion-publicacion {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 18px;
+    font-size: 12px;
+}
+
+/* Etiquetas */
+.etiqueta {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: var(--tarjetas);
+    color: var(--texto);
+    font-size: 12px;
+}
+
+/* Advertencias medicas */
+.advertencia {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--tarjetas);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Buscador */
+.buscador-visor {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.buscador-visor input {
+    flex: 1;
+    min-width: 0;
+    padding: 13px 16px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--campos);
+    color: var(--texto);
+    font-size: 14px;
+}
+
+.buscador-visor input:focus {
+    outline: none;
+    border: 2px solid var(--principal);
+}
+
+/* Botones */
+button {
+    min-height: 44px;
+    padding: 11px 18px;
+    border: none;
+    border-radius: var(--radio);
+    background: var(--titulos);
+    color: var(--contraste);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.boton-secundario {
+    border: 1px solid var(--bordes);
+    background: transparent;
+    color: var(--titulos);
+}
+
+/* Enlaces */
+a {
+    color: var(--titulos);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Mensajes */
+.mensaje-vacio {
+    padding: 25px;
+    border-radius: var(--radio);
+    background: var(--superficie);
+    text-align: center;
+}
+
+/* Pie de pagina */
+.pie-visor {
+    margin-top: 40px;
+    padding: 25px;
+    border-top: 1px solid var(--bordes);
+    color: var(--texto);
+    text-align: center;
+    font-size: 13px;
+}
+
+/* Adaptacion a pantallas medianas */
+@media (max-width: 900px) {
+    .publicaciones {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .categorias {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .encabezado-visor {
+        flex-wrap: wrap;
+    }
+}
+
+/* Adaptacion a pantallas pequenas */
+@media (max-width: 600px) {
+    .encabezado-visor {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 20px;
+    }
+
+    .navegacion-visor {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .contenido-visor {
+        padding: 25px 16px;
+    }
+
+    .bienvenida-visor {
+        padding: 25px;
+    }
+
+    .bienvenida-visor h2 {
+        font-size: 24px;
+    }
+
+    .publicaciones {
+        grid-template-columns: 1fr;
+    }
+
+    .categorias {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .buscador-visor {
+        flex-direction: column;
+    }
+}
+
+
+/*DETALLE DE PUBLICACIONES*/
+
+.btn-leer-publicacion {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 18px;
+    background-color: var(--principal);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.btn-leer-publicacion:hover {
+    background-color: var(--titulos);
+}
+
+.detalle-publicacion {
+    max-width: 1000px;
+    margin: 35px auto;
+}
+
+.enlace-regresar {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: var(--titulos);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.enlace-regresar:hover {
+    text-decoration: underline;
+}
+
+.articulo-completo {
+    padding: 35px;
+    background-color: var(--fondo-tarjeta);
+    border-radius: 14px;
+}
+
+.articulo-encabezado h1 {
+    margin: 15px 0;
+    color: var(--titulos);
+    font-size: 2rem;
+}
+
+.articulo-descripcion {
+    line-height: 1.7;
+}
+
+.articulo-metadata {
+    display: flex;
+    gap: 15px;
+    margin-top: 18px;
+    font-size: 0.9rem;
+}
+
+.articulo-imagen-principal {
+    margin: 30px 0;
+}
+
+.articulo-imagen-principal img {
+    width: 100%;
+    max-height: 450px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.advertencia-medica {
+    margin: 25px 0;
+    padding: 18px;
+    background-color: #fff4e5;
+    border-left: 5px solid #d99a36;
+    border-radius: 8px;
+    color: #684719;
+}
+
+.advertencia-medica p {
+    margin-bottom: 0;
+    line-height: 1.6;
+}
+
+.contenido-articulo {
+    margin-top: 30px;
+    line-height: 1.8;
+}
+
+.contenido-articulo h2,
+.seccion-recursos h2,
+.seccion-fuentes h2 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: var(--titulos);
+}
+
+.bloque-parrafo {
+    margin-bottom: 20px;
+    text-align: justify;
+}
+
+.bloque-lista {
+    padding-left: 25px;
+    margin-bottom: 20px;
+}
+
+.bloque-cita {
+    margin: 25px 0;
+    padding: 18px 22px;
+    background-color: var(--fondo);
+    border-left: 4px solid var(--principal);
+    font-style: italic;
+}
+
+.bloque-imagen {
+    margin: 25px 0;
+    text-align: center;
+}
+
+.bloque-imagen img {
+    max-width: 100%;
+    max-height: 450px;
+    border-radius: 10px;
+}
+
+.bloque-imagen figcaption {
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.bloque-recurso {
+    margin: 20px 0;
+}
+
+.bloque-recurso a,
+.seccion-recursos a,
+.seccion-fuentes a {
+    color: var(--titulos);
+    font-weight: 600;
+}
+
+.seccion-recursos,
+.seccion-fuentes {
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 1px solid var(--borde);
+}
+
+.seccion-recursos li,
+.seccion-fuentes li {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+.seccion-recursos li span {
+    display: block;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+
+    .articulo-completo {
+        padding: 20px;
+    }
+
+    .articulo-encabezado h1 {
+        font-size: 1.5rem;
+    }
+
+    .articulo-metadata {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+}

@@ -1,0 +1,308 @@
+/* Paleta oficial Vita Sacra */
+:root {
+    --principal: #8BB8E8;
+    --secundario: #B8D8F0;
+    --titulos: #2B5B84;
+    --fondo: #F0F6FC;
+    --tarjetas: #E4F0FA;
+    --contraste: #FFFFFF;
+
+    --texto: #2B5B84;
+    --campos: #FFFFFF;
+    --bordes: #B8D8F0;
+    --superficie: #FFFFFF;
+    --error: #B42318;
+
+    --radio: 14px;
+}
+
+/* Tema oscuro */
+body.tema-oscuro {
+    --fondo: #101B27;
+    --tarjetas: #1B2B3B;
+    --superficie: #24384B;
+    --texto: #EAF3FC;
+    --titulos: #8BB8E8;
+    --campos: #1B2B3B;
+    --bordes: #24384B;
+    --contraste: #1B2B3B;
+}
+
+/* Configuracion general */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 0;
+    display: block;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: Arial, sans-serif;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Estructura principal */
+.panel-admin {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Menu lateral */
+.menu-lateral {
+    width: 250px;
+    min-height: 100vh;
+    padding: 28px 20px;
+    background: var(--superficie);
+    border-right: 1px solid var(--bordes);
+}
+
+.logo-admin {
+    margin-bottom: 38px;
+    text-align: center;
+}
+
+.logo-admin h2 {
+    margin: 0;
+    color: var(--titulos);
+    font-size: 25px;
+}
+
+.logo-admin p {
+    margin: 8px 0 0;
+    font-size: 13px;
+}
+
+/* Navegacion */
+.navegacion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.navegacion a {
+    display: block;
+    padding: 13px 15px;
+    border-radius: 10px;
+    color: var(--texto);
+    font-size: 15px;
+    transition: background 0.2s;
+}
+
+.navegacion a:hover,
+.navegacion a.activo {
+    background: var(--tarjetas);
+    text-decoration: none;
+}
+
+/* Contenido principal */
+.contenido-admin {
+    flex: 1;
+    min-width: 0;
+    padding: 30px;
+}
+
+/* Encabezado */
+.encabezado-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.encabezado-admin h1 {
+    color: var(--titulos);
+    font-size: 27px;
+    text-align: left;
+}
+
+.encabezado-admin p {
+    margin: 8px 0 0;
+}
+
+/* Informacion del administrador */
+.usuario-admin {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.usuario-admin span {
+    font-weight: 600;
+}
+
+/* Secciones */
+.seccion-admin {
+    margin-bottom: 30px;
+}
+
+.seccion-admin h2 {
+    margin-bottom: 18px;
+    color: var(--titulos);
+    font-size: 21px;
+}
+
+/* Tarjetas de estadisticas */
+.estadisticas {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.tarjeta-estadistica {
+    padding: 22px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--superficie);
+}
+
+.tarjeta-estadistica p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.tarjeta-estadistica h3 {
+    margin: 14px 0 0;
+    color: var(--titulos);
+    font-size: 30px;
+}
+
+/* Tarjetas generales */
+.tarjeta-admin {
+    padding: 22px;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--superficie);
+}
+
+/* Tablas */
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--bordes);
+    border-radius: var(--radio);
+    background: var(--superficie);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th,
+td {
+    padding: 15px;
+    border-bottom: 1px solid var(--bordes);
+    font-size: 14px;
+}
+
+th {
+    background: var(--tarjetas);
+    color: var(--titulos);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Estados */
+.estado {
+    display: inline-block;
+    padding: 6px 11px;
+    border-radius: 20px;
+    background: var(--tarjetas);
+    color: var(--texto);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Botones */
+button {
+    min-height: 42px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radio);
+    background: var(--titulos);
+    color: var(--contraste);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.boton-secundario {
+    border: 1px solid var(--bordes);
+    background: transparent;
+    color: var(--titulos);
+}
+
+/* Enlaces */
+a {
+    color: var(--titulos);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Mensajes */
+.mensaje-vacio {
+    padding: 20px;
+    color: var(--texto);
+    text-align: center;
+}
+
+/* Adaptacion a pantallas medianas */
+@media (max-width: 1000px) {
+    .estadisticas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .menu-lateral {
+        width: 210px;
+    }
+}
+
+/* Adaptacion a pantallas pequenas */
+@media (max-width: 650px) {
+    .panel-admin {
+        flex-direction: column;
+    }
+
+    .menu-lateral {
+        width: 100%;
+        min-height: auto;
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid var(--bordes);
+    }
+
+    .logo-admin {
+        margin-bottom: 20px;
+    }
+
+    .navegacion {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .contenido-admin {
+        padding: 20px;
+    }
+
+    .encabezado-admin {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .estadisticas {
+        grid-template-columns: 1fr;
+    }
+}

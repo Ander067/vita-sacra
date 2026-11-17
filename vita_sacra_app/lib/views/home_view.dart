@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
@@ -6,8 +8,10 @@ import 'anatomia_3d_view.dart';
 import 'buscar_view.dart';
 import 'categorias_view.dart';
 import 'detalle_publicacion_view.dart';
+import 'establecimientos_view.dart';
 import 'guardados_view.dart';
 import 'login_view.dart';
+import 'medicamentos_view.dart';
 import 'perfil_view.dart';
 import 'recomendaciones_view.dart';
 
@@ -24,6 +28,28 @@ class _HomeViewState extends State<HomeView> {
   final ApiService _apiService = ApiService();
   final AuthService _authService = AuthService();
 
+  // Textos que se eligen al azar al abrir Inicio.
+  static const List<String> _saludos = [
+    'Bienvenido a Vita Sacra',
+    'Que gusto tenerte en Vita Sacra',
+    'Hola, nos alegra que estes aqui',
+    'Tu espacio para aprender sobre salud',
+    'Un nuevo dia para descubrir y aprender',
+  ];
+
+  static const List<String> _mensajesInicio = [
+    'Explora informacion y recursos medicos.',
+    'Descubre contenido educativo sobre salud.',
+    'Encuentra publicaciones y temas de bienestar.',
+    'Aprende sobre salud a tu propio ritmo.',
+    'Consulta articulos, categorias y recursos informativos.',
+    'Conocimiento para tomar decisiones informadas sobre salud.',
+  ];
+
+  final Random _aleatorio = Random();
+  late String _saludoActual;
+  late String _mensajeInicioActual;
+
   // Controlador del buscador.
   final TextEditingController _buscarController = TextEditingController();
 
@@ -36,9 +62,16 @@ class _HomeViewState extends State<HomeView> {
   // Identificador de la ultima consulta de publicaciones.
   int _numeroSolicitud = 0;
 
+  String _seleccionarTexto(List<String> opciones) {
+    return opciones[_aleatorio.nextInt(opciones.length)];
+  }
+
   @override
   void initState() {
     super.initState();
+
+    _saludoActual = _seleccionarTexto(_saludos);
+    _mensajeInicioActual = _seleccionarTexto(_mensajesInicio);
 
     // Consultar las publicaciones al abrir la pantalla.
     _cargarPublicaciones();
@@ -188,6 +221,16 @@ class _HomeViewState extends State<HomeView> {
     _abrirPantalla(const GuardadosView());
   }
 
+  // Abrir el directorio de establecimientos.
+  void _abrirEstablecimientos() {
+    _abrirPantalla(const EstablecimientosView());
+  }
+
+  // Abrir el catalogo educativo de medicamentos.
+  void _abrirMedicamentos() {
+    _abrirPantalla(const MedicamentosView());
+  }
+
   // Abrir el modulo de anatomia tridimensional.
   void _abrirAnatomia3D() {
     _abrirPantalla(const Anatomia3DView());
@@ -228,9 +271,11 @@ class _HomeViewState extends State<HomeView> {
       _cerrandoSesion = true;
     });
 
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+
     try {
-      // Eliminar el token almacenado.
-      await _authService.cerrarSesion();
+      final bool operacionesRemotasCompletas = await _authService
+          .cerrarSesion();
 
       if (!mounted) {
         return;
@@ -242,6 +287,17 @@ class _HomeViewState extends State<HomeView> {
         MaterialPageRoute(builder: (context) => const LoginView()),
         (route) => false,
       );
+
+      if (!operacionesRemotasCompletas) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'La sesión se cerró en este dispositivo, pero el servidor no '
+              'confirmó todas las revocaciones. La biometría local fue eliminada.',
+            ),
+          ),
+        );
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -311,7 +367,7 @@ class _HomeViewState extends State<HomeView> {
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         onTap: () {
           _abrirDetalle(publicacion);
         },
@@ -464,7 +520,18 @@ class _HomeViewState extends State<HomeView> {
 
       // Barra superior de la aplicacion.
       appBar: AppBar(
-        title: const Text('Vita Sacra'),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/vita_sacra_logo.png',
+              width: 35,
+              height: 35,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            const Text('Vita Sacra'),
+          ],
+        ),
         centerTitle: false,
         actions: [
           // Acceso al perfil del usuario.
@@ -499,7 +566,7 @@ class _HomeViewState extends State<HomeView> {
           children: [
             // Encabezado de bienvenida.
             Text(
-              'Bienvenido a Vita Sacra',
+              _saludoActual,
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
@@ -510,7 +577,7 @@ class _HomeViewState extends State<HomeView> {
             const SizedBox(height: 8),
 
             Text(
-              'Explora informacion y recursos medicos.',
+              _mensajeInicioActual,
               style: TextStyle(color: colores.onSurfaceVariant),
             ),
 
@@ -571,9 +638,15 @@ class _HomeViewState extends State<HomeView> {
                 ),
 
                 _crearAcceso(
-                  icono: Icons.bookmark_outline,
-                  titulo: 'Guardados',
-                  accion: _abrirGuardados,
+                  icono: Icons.location_on_outlined,
+                  titulo: 'Establecimientos',
+                  accion: _abrirEstablecimientos,
+                ),
+
+                _crearAcceso(
+                  icono: Icons.medication_outlined,
+                  titulo: 'Medicamentos',
+                  accion: _abrirMedicamentos,
                 ),
 
                 _crearAcceso(
