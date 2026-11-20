@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Conexiones/auth.php';
 require_once __DIR__ . '/../Conexiones/conexion.php';
+require_once __DIR__ . '/componentes/cabecera.php';
 
 date_default_timezone_set('America/Mexico_City');
 
@@ -641,6 +642,11 @@ $tituloMostrar = (string)$versionActual['titulo_snapshot'];
 $descripcionMostrar = (string)($versionActual['descripcion_snapshot'] ?? '');
 $esActualizacionPublicada = $publicacion['version_publica'] !== null;
 
+$nombreNavGlobal = $_SESSION['nom_usr'] ?? 'Mi cuenta';
+if (!is_string($nombreNavGlobal)) {
+    $nombreNavGlobal = 'Mi cuenta';
+}
+$rolNavGlobal = 'autor';
 ?>
 
 <!DOCTYPE html>
@@ -655,6 +661,14 @@ $esActualizacionPublicada = $publicacion['version_publica'] !== null;
     >
 </head>
 <body>
+    <?php
+    vitaSacraRenderCabecera(
+        $nombreNavGlobal,
+        $rolNavGlobal,
+        'gestionar',
+        $csrf
+    );
+    ?>
     <main class="contenedor contenedor-inicio">
         <header>
             <h1>Enviar publicación a revisión</h1>
@@ -839,20 +853,6 @@ $esActualizacionPublicada = $publicacion['version_publica'] !== null;
                 </button>
             </form>
         </section>
-
-        <form
-            action="<?php echo escaparEnvioRevision(RUTA_WEB); ?>/Conexiones/cerrar_sesion.php"
-            method="POST"
-        >
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?php echo escaparEnvioRevision($csrf); ?>"
-            >
-            <button type="submit" class="boton-secundario">
-                Cerrar sesión
-            </button>
-        </form>
     </main>
 
     <script>
@@ -919,5 +919,9 @@ $esActualizacionPublicada = $publicacion['version_publica'] !== null;
             });
         })();
     </script>
+    <script
+        src="<?php echo escaparEnvioRevision(RUTA_WEB); ?>/Recursos/Scripts/tema.js"
+        defer
+    ></script>
 </body>
 </html>

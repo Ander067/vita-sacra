@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../Conexiones/auth.php';
 require_once __DIR__ . '/../Conexiones/conexion.php';
+require_once __DIR__ . '/componentes/cabecera.php';
 
 requiereUsuarioActual($mysqli);
 
@@ -215,6 +216,11 @@ $enlacePanel = $esAdministrador
     ? RUTA_WEB . '/Dashboards/dashboard_admin.php'
     : RUTA_WEB . '/Dashboards/dashboard_autor.php';
 
+$nombreNavGlobal = $_SESSION['nom_usr'] ?? 'Mi cuenta';
+if (!is_string($nombreNavGlobal)) {
+    $nombreNavGlobal = 'Mi cuenta';
+}
+$rolNavGlobal = (in_array('administrador', $rolesActuales, true) ? 'administrador' : 'autor');
 ?>
 
 <!DOCTYPE html>
@@ -229,6 +235,14 @@ $enlacePanel = $esAdministrador
     >
 </head>
 <body>
+    <?php
+    vitaSacraRenderCabecera(
+        $nombreNavGlobal,
+        $rolNavGlobal,
+        'gestionar',
+        $csrf
+    );
+    ?>
     <main class="contenedor contenedor-inicio">
         <header>
             <h1>Historial editorial</h1>
@@ -542,20 +556,10 @@ $enlacePanel = $esAdministrador
                 <?php endforeach; ?>
             <?php endif; ?>
         </section>
-
-        <form
-            action="<?php echo escaparHistorialEditorial(RUTA_WEB); ?>/Conexiones/cerrar_sesion.php"
-            method="POST"
-        >
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?php echo escaparHistorialEditorial($csrf); ?>"
-            >
-            <button type="submit" class="boton-secundario">
-                Cerrar sesión
-            </button>
-        </form>
     </main>
+    <script
+        src="<?php echo escaparHistorialEditorial(RUTA_WEB); ?>/Recursos/Scripts/tema.js"
+        defer
+    ></script>
 </body>
 </html>

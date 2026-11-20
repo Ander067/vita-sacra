@@ -907,3 +907,23 @@ SELECT
     tipo_snapshot
 FROM versiones_blog
 ORDER BY blog_id, numero;
+
+
+ALTER TABLE solicitudes_rol
+    ADD COLUMN IF NOT EXISTS acepta_normas TINYINT(1) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS version_normas VARCHAR(20) NULL,
+    ADD COLUMN IF NOT EXISTS fecha_aceptacion DATETIME NULL;
+
+CREATE TABLE IF NOT EXISTS solicitudes_rol_temas (
+    id_solicitud INT NOT NULL,
+    id_categoria INT NOT NULL,
+    PRIMARY KEY (id_solicitud, id_categoria),
+    CONSTRAINT fk_solicitud_tema_solicitud
+        FOREIGN KEY (id_solicitud)
+        REFERENCES solicitudes_rol(id_solicitud)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_solicitud_tema_categoria
+        FOREIGN KEY (id_categoria)
+        REFERENCES categorias(id_categoria)
+        ON DELETE RESTRICT
+) ENGINE=InnoDB;
